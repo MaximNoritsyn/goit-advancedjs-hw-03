@@ -1,14 +1,18 @@
 import { fetchBreeds, fetchCatByBreed } from './js/cat-api'
+import iziToast from 'izitoast'
+import "izitoast/dist/css/iziToast.min.css";
+import './css/slimselect.css'
+import SlimSelect from 'slim-select'
 
 const selectors = {
     breeds: document.querySelector('select.breed-select'),
     catInfo: document.querySelector('div.cat-info'),
-    loader: document.querySelector('p.loader'),
-    error: document.querySelector('p.error')
+    loader: document.querySelector('span.loader')
 }
 
-// markups
 
+
+// markups
 function markupBreedOption(breeds) {
     return breeds.map(
         breed => `<option value="${breed.id}">${breed.name}</option>`
@@ -17,11 +21,17 @@ function markupBreedOption(breeds) {
 
 function markupCatInfo(cat) {
     return `
-        <h2>${cat.breeds[0].name}</h2>
-        <img src="${cat.url}" alt="${cat.breeds[0].name}" width="200px">
-        <p>${cat.breeds[0].description}</p>
+    <div class="cat-row">
+        <img src="${cat.url}" alt="${cat.breeds[0].name}" width="300px" heigth="200px">
+        <div class="cat-text-block">
+            <h2>${cat.breeds[0].name}</h2>
+            <p>${cat.breeds[0].description}</p>
+            <strong>Temperament:</strong> ${cat.breeds[0].temperament}<br>
+        </div>
+    </div>
     `
 }
+
 
 
 // functions
@@ -35,13 +45,14 @@ function loadingStatus(isLoading) {
     }
 }
 
-function errorStatus(isError) {
-    if (isError) {
-        selectors.error.classList.remove('hidden')
-    } else {
-        selectors.error.classList.add('hidden')
-    }
+function sendError() {
+  iziToast.error({
+    message: 'Oops! Something went wrong! Try reloading the page!',
+    position: "topCenter",
+    transitionIn: 'fadeInDown'
+  });
 }
+
 
 
 // event handlers
@@ -59,28 +70,35 @@ function handleBreedChange(event) {
         error => {
             console.error(error)
             loadingStatus(false)
-            errorStatus(true)
+            sendError()
         }
     )
 
 }
 
 
-// main code
 
-loadingStatus(false)
-errorStatus(false)
+// main code
+loadingStatus(true)
 
 fetchBreeds()
     .then(
         data => {
+            loadingStatus(false)
             selectors.breeds.innerHTML = markupBreedOption(data)
+            new SlimSelect({
+                select: selectors.breeds,
+                settings: {
+                    contentLocation: document.getElementById('local')
+                }
+            })
         }
     )
     .catch(
         error => {
+            loadingStatus(false)
             console.error(error)
-            errorStatus(true)
+            sendError()
         }
     )
 
